@@ -2,6 +2,7 @@ import { beforeAll, afterAll, describe, it, expect } from "vitest";
 import request from "supertest";
 import { app } from "../src/app.js";
 import { db } from "../src/lib/db.js";
+import { config } from "../src/lib/config.js";
 import {
   today,
   splitCents,
@@ -67,6 +68,14 @@ describe("Autenticação e dinheiro", () => {
           .send({})
       ).status,
     ).toBe(403);
+    expect((await a.post("/api/clients")
+      .set("Origin", new URL(config.APP_URL).origin)
+      .set("Sec-Fetch-Site", "same-origin")
+      .send({})).status).toBe(400);
+    expect((await a.post("/api/clients")
+      .set("Origin", new URL(config.APP_URL).origin)
+      .set("Sec-Fetch-Site", "cross-site")
+      .send({})).status).toBe(403);
   });
   it("valida dinheiro, divide centavos e calcula desconto sem perder centavos", () => {
     expect(parseMoney("1.234,56")).toBe(123456);

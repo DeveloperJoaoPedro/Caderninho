@@ -1,4 +1,8 @@
 import { spawn } from "node:child_process";
+if (process.env.CODESPACE_NAME && process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN) {
+  process.env.__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS =
+    `${process.env.CODESPACE_NAME}-5173.${process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}`;
+}
 const children = ["@caderninho/api", "@caderninho/web"].map((workspace) =>
   spawn("npm", ["run", "dev", "-w", workspace], {
     stdio: "inherit",

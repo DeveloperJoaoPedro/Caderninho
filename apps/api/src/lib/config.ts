@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import { resolve } from "node:path";
 import { existsSync } from "node:fs";
 import { z } from "zod";
+import { resolveAppUrl } from "./app-url.js";
 dotenv.config({
   path: existsSync(resolve(process.cwd(), ".env"))
     ? resolve(process.cwd(), ".env")
@@ -23,4 +24,7 @@ const configSchema = z.object({
   SMTP_PASSWORD: z.string().optional(),
   SMTP_SECURE: z.string().optional(),
 });
-export const config = configSchema.parse(process.env);
+export const config = configSchema.parse({
+  ...process.env,
+  APP_URL: resolveAppUrl(process.env),
+});

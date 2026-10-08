@@ -12,7 +12,7 @@ ready() {
   curl --fail --silent http://127.0.0.1:3001/api/health >/dev/null &&
     curl --fail --silent http://127.0.0.1:5173/ >/dev/null
 }
-if ready; then
+if [[ "${1:-}" != "--restart" ]] && ready; then
   echo "Caderninho já está rodando. Abra a porta 5173 na aba Ports."
   exit 0
 fi
@@ -23,6 +23,10 @@ if [[ -f "$pid_file" ]]; then
     [[ "$(readlink "/proc/$saved_pid/cwd" 2>/dev/null || true)" == "$PWD" ]] &&
     [[ "$(ps -p "$saved_pid" -o args=)" == *"node scripts/dev.mjs"* ]]; then
     kill -TERM "$saved_pid"
+    for ((attempt=0; attempt<20; attempt++)); do
+      if ! kill -0 "$saved_pid" 2>/dev/null; then break; fi
+      sleep 0.25
+    done
   fi
 fi
 nohup node scripts/dev.mjs >/tmp/caderninho-dev.log 2>&1 &

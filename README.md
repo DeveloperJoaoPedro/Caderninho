@@ -119,6 +119,15 @@ Nunca use o servidor de desenvolvimento Vite como servidor de produção.
 
 ## Rodar diretamente pelo GitHub Codespaces
 
+Se o cadastro mostrar **“Requisição não permitida.”**, atualize o código e reinicie pelo terminal do Codespaces:
+
+```bash
+git pull origin main
+bash scripts/codespaces-start.sh --restart
+```
+
+Depois atualize a página aberta pela porta **5173**. A API reconhece automaticamente o endereço do próprio Codespace em desenvolvimento, inclusive com `npm run dev`.
+
 O repositório inclui um Dev Container que instala Node.js 24 e Docker, prepara o PostgreSQL e inicia o aplicativo. É um ambiente de desenvolvimento acessível pelo navegador.
 
 1. No GitHub, abra o repositório **DeveloperJoaoPedro/Caderninho**.
