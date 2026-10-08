@@ -1,0 +1,246 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Brand {
+  BOTICARIO
+  NATURA
+  AVON
+}
+
+enum PaymentMethod {
+  CASH
+  PIX
+  CARD
+  CREDIT
+}
+
+enum SaleStatus {
+  ACTIVE
+  CANCELLED
+}
+
+enum ExpenseCategory {
+  ORDER
+  SHIPPING
+  PACKAGING
+  OTHER
+}
+
+model User {
+  id             String            @id @default(uuid()) @db.Uuid
+  name           String
+  email          String            @unique
+  passwordHash   String
+  brands         Brand[]
+  sessionVersion Int               @default(0)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  clients        Client[]
+  products       Product[]
+  campaigns      Campaign[]
+  sales          Sale[]
+  items          SaleItem[]
+  installments   Installment[]
+  receipts       Receipt[]
+  expenses       Expense[]
+  resetTokens    PasswordReset[]
+  brandSettings  UserBrand[]
+  reversals      ReceiptReversal[]
+}
+
+model PasswordReset {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  @@unique([userId, id])
+  @@index([userId])
+}
+
+model Client {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  phone     String
+  notes     String   @default("")
+  archived  Boolean  @default(false)
+  sales     Sale[]
+
+  @@unique([userId, id])
+  @@index([userId, name])
+}
+
+model Product {
+  id           String     @id @default(uuid()) @db.Uuid
+  userId       String     @db.Uuid
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  brand        Brand
+  costCents    Int
+  priceCents   Int
+  catalogCents Int
+  archived     Boolean    @default(false)
+  items        SaleItem[]
+
+  @@unique([userId, id])
+  @@index([userId, brand])
+}
+
+model Campaign {
+  id        String     @id @default(uuid()) @db.Uuid
+  userId    String     @db.Uuid
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  brand     Brand
+  startsOn  DateTime   @db.Date
+  endsOn    DateTime   @db.Date
+  items     SaleItem[]
+  expenses  Expense[]
+
+  @@unique([userId, id])
+}
+
+model Sale {
+  id            String        @id @default(uuid()) @db.Uuid
+  userId        String        @db.Uuid
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientId      String        @db.Uuid
+  soldOn        DateTime      @db.Date
+  paymentMethod PaymentMethod
+  subtotalCents Int
+  discountCents Int           @default(0)
+  totalCents    Int
+  status        SaleStatus    @default(ACTIVE)
+  cancelledAt   DateTime?
+  cancelReason  String?
+  notes         String        @default("")
+  client        Client        @relation(fields: [userId, clientId], references: [userId, id], onDelete: Restrict)
+  items         SaleItem[]
+  installments  Installment[]
+
+  @@unique([userId, id])
+  @@index([userId, soldOn])
+}
+
+model SaleItem {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @db.Uuid
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  saleId       String    @db.Uuid
+  productId    String    @db.Uuid
+  campaignId   String?   @db.Uuid
+  productName  String
+  brand        Brand
+  quantity     Int
+  costCents    Int
+  priceCents   Int
+  revenueCents Int
+  sale         Sale      @relation(fields: [userId, saleId], references: [userId, id], onDelete: Cascade)
+  product      Product   @relation(fields: [userId, productId], references: [userId, id], onDelete: Restrict)
+  campaign     Campaign? @relation(fields: [userId, campaignId], references: [userId, id], onDelete: Restrict)
+
+  @@unique([userId, id])
+  @@index([userId, saleId])
+  @@index([userId, campaignId])
+}
+
+model Installment {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @db.Uuid
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  saleId      String    @db.Uuid
+  number      Int
+  amountCents Int
+  dueOn       DateTime  @db.Date
+  sale        Sale      @relation(fields: [userId, saleId], references: [userId, id], onDelete: Cascade)
+  receipts    Receipt[]
+
+  @@unique([saleId, number])
+  @@unique([userId, id])
+  @@index([userId, dueOn])
+}
+
+model Receipt {
+  id            String           @id @default(uuid()) @db.Uuid
+  userId        String           @db.Uuid
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  installmentId String           @db.Uuid
+  amountCents   Int
+  paidOn        DateTime         @db.Date
+  method        PaymentMethod
+  reversal      ReceiptReversal?
+  installment   Installment      @relation(fields: [userId, installmentId], references: [userId, id], onDelete: Cascade)
+
+  @@unique([userId, id])
+  @@index([userId, paidOn])
+}
+
+model Expense {
+  id          String          @id @default(uuid()) @db.Uuid
+  userId      String          @db.Uuid
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaignId  String?         @db.Uuid
+  brand       Brand?
+  description String
+  category    ExpenseCategory
+  amountCents Int
+  spentOn     DateTime        @db.Date
+  campaign    Campaign?       @relation(fields: [userId, campaignId], references: [userId, id], onDelete: Restrict)
+
+  @@unique([userId, id])
+  @@index([userId, spentOn])
+}
+
+model UserBrand {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @db.Uuid
+  brand       Brand
+  discountBps Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, brand])
+}
+
+model ReceiptReversal {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  receiptId  String   @unique @db.Uuid
+  reason     String
+  reversedOn DateTime @db.Date
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  receipt    Receipt  @relation(fields: [userId, receiptId], references: [userId, id], onDelete: Cascade)
+
+  @@unique([userId, receiptId])
+  @@index([userId, reversedOn])
+}

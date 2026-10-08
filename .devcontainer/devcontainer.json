@@ -1,0 +1,15 @@
+{
+  "name": "Caderninho",
+  "image": "mcr.microsoft.com/devcontainers/base:bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "24" },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "forwardPorts": [5173, 8025],
+  "portsAttributes": {
+    "5173": { "label": "Caderninho", "onAutoForward": "openBrowser" },
+    "8025": { "label": "E-mails de teste", "onAutoForward": "silent" }
+  },
+  "postCreateCommand": "bash scripts/codespaces-setup.sh",
+  "postStartCommand": "bash scripts/codespaces-start.sh"
+}
