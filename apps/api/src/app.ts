@@ -4,6 +4,7 @@ import helmet from "helmet";
 import { ZodError } from "zod";
 import { Prisma } from "@prisma/client";
 import { config } from "./lib/config.js";
+import { isAllowedOrigin } from "./lib/app-url.js";
 import { db } from "./lib/db.js";
 import { AppError } from "./lib/errors.js";
 import { authRoutes } from "./routes/auth.js";
@@ -15,10 +16,7 @@ app.use(express.json({ limit: "128kb" }));
 app.use(cookieParser());
 app.use((req, _res, next) => {
   if (!["GET", "HEAD", "OPTIONS"].includes(req.method)) {
-    const origin = req.get("origin");
-    if (origin && origin !== new URL(config.APP_URL).origin)
-      return next(new AppError(403, "Requisição não permitida."));
-    if (req.get("sec-fetch-site") === "cross-site")
+    if (!isAllowedOrigin(req.get("origin"), req.get("sec-fetch-site"), config.APP_URL, process.env))
       return next(new AppError(403, "Requisição não permitida."));
   }
   next();
