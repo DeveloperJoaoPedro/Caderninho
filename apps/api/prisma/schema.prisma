@@ -95,6 +95,7 @@ model Product {
   costCents    Int
   priceCents   Int
   catalogCents Int
+  code         String     @default("")
   archived     Boolean    @default(false)
   items        SaleItem[]
 

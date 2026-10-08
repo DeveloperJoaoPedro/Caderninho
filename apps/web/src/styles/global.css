@@ -1921,3 +1921,12 @@ td:last-child {
     scroll-behavior: auto !important;
   }
 }
+
+.catalog-search { padding: 16px; border: 1px solid var(--border, #eaeaea); border-radius: 8px; display: grid; gap: 12px; background: #f7f6f3; }
+.catalog-search h3, .catalog-search p { margin: 0; }
+.catalog-search p { font-size: .9rem; }
+.catalog-results { display: grid; gap: 8px; }
+.catalog-choice { display: grid; gap: 6px; text-align: left; padding: 14px; border: 1px solid #ddd; border-radius: 8px; background: white; color: inherit; cursor: pointer; min-height: 48px; overflow-wrap: anywhere; }
+.catalog-choice:hover { border-color: #555; }
+.catalog-choice span { font-size: .9rem; }
+.catalog-choice:focus-visible { outline: 2px solid #333; outline-offset: 2px; }

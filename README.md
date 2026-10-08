@@ -138,3 +138,21 @@ O repositório inclui um Dev Container que instala Node.js 24 e Docker, prepara 
 A porta **8025** permite consultar os e-mails de recuperação de senha na caixa local de teste. Mantenha as portas privadas. Quando terminar, pare o Codespace pelo menu do GitHub para não consumir recursos sem necessidade. O serviço tem cotas e pode gerar cobrança conforme sua conta; confira o painel de uso do GitHub.
 
 O código é persistido com commits; os registros das clientes ficam no volume PostgreSQL do Codespace. Exporte seus dados antes de excluir ou recriar esse ambiente. A exclusão do Codespace não deve ser usada como backup. Para hospedar um serviço público de uso contínuo, será necessário um deploy com banco e SMTP próprios, conforme a seção de publicação.
+
+## Buscar produtos do Boticário sem serviço pago
+
+Em **Produtos → Novo produto**, use **Buscar no Boticário** por nome ou código (com ou sem B). Escolha um resultado, confira os valores e salve. O código também pode ser preenchido manualmente e usado na busca de **Meus produtos**. Natura e Avon continuam com cadastro manual.
+
+A fonte é a loja pública, não o catálogo da revendedora: promoções e valores podem diferir do seu ciclo. O formulário mostra a fonte e a data da consulta. Nome, código, catálogo, custo e venda continuam editáveis; o custo sugerido aplica o desconto configurado para Boticário. Importações nunca atualizam automaticamente produtos ou vendas anteriores.
+
+Não usa Apify, assinatura ou chave. A integração depende da disponibilidade e do formato do site; pode deixar de funcionar, com mensagem para usar o cadastro manual. Cada usuária tem até 20 consultas a cada 10 minutos. Resultados públicos ficam em memória por uma hora (máximo 100 buscas), com no máximo 12 produtos por busca e 2 consultas externas simultâneas. Não envia dados de clientes nem credenciais ao Boticário. Não contorna bloqueios.
+
+Para atualizar um Codespaces existente após esta mudança:
+
+```bash
+git pull origin main
+npm run db:generate
+bash scripts/codespaces-start.sh --restart
+```
+
+A reinicialização aplica a migração que adiciona o código, preservando produtos existentes. Faça a geração do Prisma com o app parado se ele estiver em um terminal com `npm run dev` (Ctrl+C), e inicie novamente ao terminar. Em ambientes com proxy HTTP de saída, Node 24 pode exigir `NODE_USE_ENV_PROXY=1` para consultar a fonte.

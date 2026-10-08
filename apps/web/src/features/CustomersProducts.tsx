@@ -16,6 +16,7 @@ import {
   dateLabel,
 } from "@caderninho/shared";
 import { api } from "../lib/api";
+import { CatalogSearch, type CatalogChoice } from "./CatalogSearch";
 import type { Client, Product, User } from "../lib/types";
 import {
   AddButton,
@@ -251,7 +252,7 @@ export function Products({
 }) {
   const [q, setQ] = useState("");
   const filtered = rows.filter((r) =>
-    r.name.toLowerCase().includes(q.toLowerCase()),
+    (r.name + " " + r.code).toLowerCase().includes(q.toLowerCase()),
   );
   return (
     <>
@@ -266,7 +267,7 @@ export function Products({
         <MagnifyingGlass size={22} />
         <input
           aria-label="Buscar produto"
-          placeholder="Buscar produto"
+          placeholder="Buscar por nome ou código"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
@@ -277,6 +278,7 @@ export function Products({
             <article className="product-card" key={p.id}>
               <span className="brand-tag">{brandNames[p.brand]}</span>
               <h2>{p.name}</h2>
+              {p.code && <p>Código: {p.code}</p>}
               <div className="product-prices">
                 <span>
                   Custo<strong>{money(p.costCents)}</strong>
@@ -335,6 +337,8 @@ export function ProductForm({
   onClose: () => void;
   onArchive?: () => void;
 }) {
+  const [code, setCode] = useState(row?.code ?? "");
+  const [source, setSource] = useState<{ url: string; checkedAt: string }>();
   const [name, setName] = useState(row?.name ?? ""),
     [brand, setBrand] = useState(row?.brand ?? user.brands[0] ?? "NATURA"),
     [catalog, setCatalog] = useState(
@@ -350,6 +354,14 @@ export function ProductForm({
     [priceManual, setPriceManual] = useState(!!row);
   const discount =
     user.brandSettings?.find((b) => b.brand === brand)?.discountBps ?? 0;
+  function chooseProduct(product: CatalogChoice, checkedAt: string) {
+    const value = (product.priceCents / 100).toFixed(2).replace(".", ",");
+    setName(product.name); setCode(product.code); setBrand("BOTICARIO");
+    setCatalog(value); setPrice(value); setManual(false); setPriceManual(false);
+    const d = user.brandSettings?.find((b) => b.brand === "BOTICARIO")?.discountBps ?? 0;
+    setCost((catalogCost(product.priceCents, d) / 100).toFixed(2).replace(".", ","));
+    setSource({ url: product.sourceUrl, checkedAt });
+  }
   function autoCost(value: string, b = brand) {
     if (manual) return;
     try {
@@ -382,6 +394,7 @@ export function ProductForm({
             "/products" + (row ? "/" + row.id : ""),
             row ? "PATCH" : "POST",
             productSchema.parse({
+              code,
               name,
               brand,
               catalogCents: parseMoney(catalog),
@@ -392,6 +405,12 @@ export function ProductForm({
           await onDone();
         }}
       >
+        {!row && <CatalogSearch onChoose={chooseProduct} />}
+        {source && <p className="note" role="status">
+          Produto preenchido. Confira o preço de catálogo, seu custo e o preço de venda antes de salvar.
+          {" "}<a href={source.url} target="_blank" rel="noopener noreferrer">Ver na loja do Boticário</a>
+          {" "}· Consultado em {new Date(source.checkedAt).toLocaleString("pt-BR")}.
+        </p>}
         <Field label="Nome do produto">
           <input
             value={name}
@@ -399,6 +418,9 @@ export function ProductForm({
             required
             placeholder="Ex.: Hidratante de maracujá"
           />
+        </Field>
+        <Field label="Código do produto (opcional)">
+          <input value={code} maxLength={40} onChange={(e) => setCode(e.target.value)} placeholder="Ex.: B89331" />
         </Field>
         <Field label="Marca">
           <select

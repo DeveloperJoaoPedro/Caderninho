@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { rateLimit } from "express-rate-limit";
+import { catalogQuery, searchCatalog } from "../services/catalog.js";
 import { z } from "zod";
 import PDFDocument from "pdfkit";
 import {
@@ -21,6 +23,16 @@ import { auth } from "../middleware/auth.js";
 import * as service from "../services/business.js";
 export const businessRoutes = Router();
 businessRoutes.use(auth);
+businessRoutes.get("/catalog/boticario", rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 20,
+  keyGenerator: (req) => req.userId,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: { message: "Você fez várias buscas. Aguarde alguns minutos ou cadastre manualmente." },
+}), async (req, res) => {
+  res.set("Cache-Control", "no-store").json(await searchCatalog(catalogQuery.parse(req.query.q)));
+});
 const routeId = (value: unknown) => id.parse(value);
 const search = (value: unknown) => z.string().max(100).default("").parse(value);
 businessRoutes.get("/clients", async (req, res) =>

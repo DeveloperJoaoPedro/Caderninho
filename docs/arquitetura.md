@@ -82,3 +82,13 @@ A situação da parcela é calculada pelo vencimento e pelo saldo. A tela oferec
 Rode os comandos a partir da raiz: `npm run dev` inicia as duas aplicações usando apenas processos do Node e npm workspaces. Execute `npm test` para validar regras e segurança com PostgreSQL; `npm run test:e2e` exercita o navegador em celular e desktop; `npm run typecheck` verifica os contratos TypeScript; `npm run build` gera os arquivos de produção.
 
 Para adicionar um campo: altere o schema Prisma, crie uma migração com `npm exec -w @caderninho/api -- prisma migrate dev --name nome_da_mudanca`, atualize o schema Zod compartilhado e os tipos da resposta, implemente a regra no serviço/repositório e exponha o campo no formulário. Nunca edite migrações já aplicadas em ambientes compartilhados.
+
+## Busca de produtos na loja pública
+
+O componente `CatalogSearch` pede nome ou código, mostra resultados e devolve a escolha ao formulário. O formulário preenche os campos e calcula o custo sugerido, mas a usuária confirma o cadastro normalmente. A busca externa não grava produtos: só o botão Salvar usa a rota já existente de cadastro.
+
+A rota `/api/catalog/boticario` exige login, valida o texto e limita consultas por usuária. O serviço `catalog.ts` consulta um domínio fixo, segue apenas redirecionamentos no mesmo domínio e lê os cartões da busca ou os dados estruturados do produto. Há limites de tempo, tamanho e concorrência, com cache de dados públicos em memória. Falhas mantêm o cadastro manual disponível. Não há acesso ao banco nessa consulta; o repositório continua responsável por gravar o produto com o id da usuária, incluindo o código opcional. A migração mantém todos os registros existentes.
+
+Valores de preço são convertidos de texto decimal em centavos inteiros. Vendas mantêm seus próprios valores registrados, independentemente de consultas futuras à loja.
+
+Validação: testes automatizados cobrem leitura de lista e página de produto, centavos, cache, falhas e bloqueio de links/redirecionamentos externos. O teste de navegador simula a fonte para verificar erro, escolha, custo sugerido, edição e gravação em celular e desktop. A disponibilidade real da loja deve ser conferida separadamente, pois esses testes não dependem dela.

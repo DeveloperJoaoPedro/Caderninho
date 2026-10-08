@@ -127,6 +127,7 @@ export const clientSchema = z
   })
   .transform((v) => ({ ...v, phone: normalizePhone(v.phone) }));
 export const productSchema = z.object({
+  code: z.string().trim().max(40).default(""),
   name: z.string().trim().min(2, "Informe o nome do produto.").max(150),
   brand: z.enum(brands),
   catalogCents: positiveCents,

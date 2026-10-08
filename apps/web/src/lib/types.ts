@@ -16,6 +16,7 @@ export interface Client {
   sales?: Sale[];
 }
 export interface Product {
+  code: string;
   id: string;
   name: string;
   brand: string;

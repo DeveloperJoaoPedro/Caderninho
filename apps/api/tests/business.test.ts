@@ -59,6 +59,8 @@ describe("Autenticação e dinheiro", () => {
     expect(good.body.passwordHash).toBeUndefined();
   });
   it("exige sessão e protege origem nas alterações", async () => {
+    expect((await request(app).get("/api/catalog/boticario?q=Lily")).status).toBe(401);
+    expect((await a.get("/api/catalog/boticario?q=x")).status).toBe(400);
     expect((await request(app).get("/api/clients")).status).toBe(401);
     expect(
       (
